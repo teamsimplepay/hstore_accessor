@@ -95,6 +95,26 @@ module HstoreAccessor
               attribute_changes.uniq.size == 1 ? nil : attribute_changes
             end
 
+            define_method("will_save_change_to_#{key}?") do
+              send("#{key}_change").present?
+            end
+
+            define_method("#{key}_in_database") do
+              (send(:attribute_was, hstore_attribute.to_s) || {})[key.to_s]
+            end
+
+            define_method("saved_change_to_#{key}?") do
+              hstore_changes = try(:saved_changes)&.dig(hstore_attribute.to_s)
+              return false if hstore_changes.nil?
+              attribute_changes = hstore_changes.map { |change| change.try(:[], store_key.to_s) }
+              attribute_changes.uniq.size == 2 # will have two values if something changed
+            end
+
+            define_method("#{key}_before_last_save") do
+              value = try(:saved_changes)&.dig(hstore_attribute.to_s, 0, store_key.to_s)
+              Serialization.deserialize(data_type, value)
+            end
+
             define_method("restore_#{key}!") do
               old_hstore = send("#{hstore_attribute}_change").try(:first) || {}
               send("#{key}=", old_hstore[key.to_s])
