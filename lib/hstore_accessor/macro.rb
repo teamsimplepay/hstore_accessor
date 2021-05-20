@@ -85,7 +85,7 @@ module HstoreAccessor
             end
 
             define_method("#{key}_was") do
-              (send(:attribute_was, hstore_attribute.to_s) || {})[key.to_s]
+              Serialization.deserialize(data_type, (send(:attribute_was, hstore_attribute.to_s) || {})[key.to_s])
             end
 
             define_method("#{key}_change") do
